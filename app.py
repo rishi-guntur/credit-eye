@@ -32,7 +32,6 @@ def fetch_all_data():
     return data
 
 try:
-    try:
     d = fetch_all_data()
 
     # --- DATE RANGE CONTROLS ---
