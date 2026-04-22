@@ -13,9 +13,7 @@ except Exception as e:
     st.error("Secrets not found. Please add your FRED_API_KEY to the Streamlit Settings.")
     st.stop()
 
-st.set_page_config(page_title="Credit & Macro Intelligence", layout="wide")
-st.title("🛡️ Credit Market & Macro Intelligence")
-st.markdown(f"*Live Market Data through April 2026*")
+st.set_page_config(page_title="Credit Eyes", layout="wide")
 
 @st.cache_data(ttl=3600)
 def fetch_all_data():
