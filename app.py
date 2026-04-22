@@ -56,7 +56,7 @@ try:
     # --- SECTION 3: YIELD CURVE ---
     st.header("3. Treasury Yield Curve (10Y-2Y Spread)")
     fig3 = go.Figure()
-    fig3.add_trace(go.Scatter(x=d['Spread_10Y2Y'].index, y=d['Spread_10Y2Y'], name="10Y-2Y Spread", line=dict(color='yellow')))
+    fig3.add_trace(go.Scatter(x=d['Spread_10Y2Y'].index, y=d['Spread_10Y2Y'], name="10Y-2Y Spread", line=dict(color='#4dd9ac')))
     fig3.add_hline(y=0, line_dash="dash")
     fig3.update_layout(template="plotly_dark", height=300)
     st.plotly_chart(fig3, use_container_width=True)
