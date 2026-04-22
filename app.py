@@ -523,7 +523,7 @@ st.markdown(
     '</div>',
     unsafe_allow_html=True
 )    # --- DATE RANGE CONTROLS ---
-    st.sidebar.header("Date Range")
+st.sidebar.header("Date Range")
     min_date = datetime(1990, 1, 1)
     max_date = datetime.today()
 
