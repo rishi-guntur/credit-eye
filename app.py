@@ -5,7 +5,7 @@ import plotly.graph_objects as go
 from datetime import datetime
 
 # Initialize FRED (Using a common public key for demo; get your own at fred.stlouisfed.org)
-fred = Fred(api_key='43e4963507d9f783228a4740e34c98f9')
+fred = Fred(api_key='180513e2616ca9103f8d0a33154057c0')
 
 st.set_page_config(page_title="Macro Regime Dashboard", layout="wide")
 st.title("🏛️ Macro Regime Metadata (Live)")
