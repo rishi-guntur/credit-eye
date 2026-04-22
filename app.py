@@ -787,7 +787,16 @@ if show_lookback:
         )
 
     fig_lb.update_layout(
-        **dark_layout(height=560, title="US Credit Market Evolution 1970–2025 — Size by Instrument ($B)"),
+        template="plotly_dark",
+        height=560,
+        paper_bgcolor="#0a0e1a",
+        plot_bgcolor="#0d1220",
+        font=dict(family="IBM Plex Mono", size=11, color="#8aa0bc"),
+        margin=dict(l=60, r=60, t=60, b=40),
+        title=dict(
+            text="US Credit Market Evolution 1970-2025 -- Size by Instrument ($B)",
+            font=dict(size=12, color="#5a9ad4"),
+        ),
         yaxis=dict(
             title="Market Size ($B)",
             title_font=dict(color="#8aa0bc"),
@@ -796,20 +805,25 @@ if show_lookback:
         ),
         yaxis2=dict(
             title="S&P 500 / Yield (bps)",
-            overlaying="y", side="right",
+            overlaying="y",
+            side="right",
             showgrid=False,
             title_font=dict(color="#5a9ad4"),
         ),
         xaxis=dict(
             title="Year",
-            tickmode="linear", dtick=5,
+            tickmode="linear",
+            dtick=5,
             gridcolor="#1a2540",
         ),
         legend=dict(
             orientation="h",
-            yanchor="bottom", y=1.02,
-            xanchor="left", x=0,
+            yanchor="bottom",
+            y=1.02,
+            xanchor="left",
+            x=0,
             font=dict(size=9),
+            bgcolor="rgba(0,0,0,0)",
         ),
         hovermode="x unified",
     )
