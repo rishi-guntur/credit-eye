@@ -23,7 +23,7 @@ def fetch_all_data():
         "HY_Spread": fred.get_series('BAMLH0A0HYM2'),
         "IG_Spread": fred.get_series('BAMLC0A0CM'),
         "Yield_10Y": fred.get_series('DGS10'),
-        "Yield_2Y": fred.get_series('DGS2Y'),
+        "Yield_2Y": fred.get_series('DGS2'),
         "Spread_10Y2Y": fred.get_series('T10Y2Y'),
         "Consumer_Total": fred.get_series('TOTALSL'),
         "Revolving": fred.get_series('REVOLSL'),
