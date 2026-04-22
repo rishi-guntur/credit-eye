@@ -8,7 +8,7 @@ from datetime import datetime
 import yfinance as yf
 
 # ── PAGE CONFIG ──────────────────────────────────────────────────────────────
-st.set_page_config(page_title="Credit Eyes", layout="wide", page_icon="📡")
+st.set_page_config(page_title="Credit Eyes", layout="wide")
 
 # ── CUSTOM CSS ───────────────────────────────────────────────────────────────
 st.markdown("""
