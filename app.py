@@ -5,7 +5,7 @@ import plotly.graph_objects as go
 from datetime import datetime
 
 # Initialize FRED (Replace with your actual key)
-fred = Fred(api_key='44731440b60db341fc713e7906785f20')
+fred = Fred(api_key='bb77484198247930e72b4d6f3dbeb7aa')
 
 st.set_page_config(page_title="Credit Eye", layout="wide")
 st.title("Macro")
