@@ -9,7 +9,7 @@ import yfinance as yf
 
 # ── PAGE CONFIG ──────────────────────────────────────────────────────────────
 st.set_page_config(page_title="Credit Eyes", layout="wide")
-st.caption("Created by Rishi Guntur")
+# st.caption("Created by Rishi Guntur")
 
 # ── CUSTOM CSS ───────────────────────────────────────────────────────────────
 st.markdown("""
