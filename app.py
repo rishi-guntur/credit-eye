@@ -6,6 +6,31 @@ import plotly.graph_objects as go
 import plotly.express as px
 from datetime import datetime
 import yfinance as yf
+import time # Add this at the top with your other imports
+
+@st.cache_data(ttl=3600)
+def fetch_all_data():
+    series_to_fetch = {
+        "FFR": "FEDFUNDS", "M2": "WM2NS", "HY_Spread": "BAMLH0A0HYM2",
+        "IG_Spread": "BAMLC0A0CM", "Yield_10Y": "DGS10", "Yield_2Y": "DGS2Y",
+        "Spread_10Y2Y": "T10Y2Y", "Consumer_Total": "TOTALSL",
+        "Revolving": "REVOLSL", "BAA_Yield": "BAA", 
+        "Home_Price": "CSUSHPINSA", "PCE_Income": "DSPIC96"
+    }
+    
+    data = {}
+    for label, s_id in series_to_fetch.items():
+        # Try up to 3 times for each data point
+        for attempt in range(3):
+            try:
+                data[label] = fred.get_series(s_id)
+                time.sleep(0.2) # Small pause to avoid overwhelming the API
+                break 
+            except Exception:
+                if attempt == 2: # If it fails 3 times, set to None
+                    data[label] = None
+                time.sleep(1) # Wait longer before retrying
+    return data
 
 # ── PAGE CONFIG ──────────────────────────────────────────────────────────────
 st.set_page_config(page_title="Credit Eyes", layout="wide")
