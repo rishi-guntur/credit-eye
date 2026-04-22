@@ -8,8 +8,7 @@ from datetime import datetime
 import yfinance as yf
 
 # ── PAGE CONFIG ──────────────────────────────────────────────────────────────
-st.set_page_config(page_title="Credit Eyes", layout="wide")
-st.caption("Created by Rishi Guntur")
+st.set_page_config(page_title="Credit Eyes", layout="wide", page_icon="📡")
 
 # ── CUSTOM CSS ───────────────────────────────────────────────────────────────
 st.markdown("""
@@ -206,10 +205,11 @@ with st.sidebar:
                                 min_value=datetime(1990, 1, 1), max_value=datetime.today())
     st.markdown("---")
     st.markdown("**Sections**")
-    show_macro  = st.checkbox("1 · Macro Regime",    value=True)
-    show_credit = st.checkbox("2 · Credit Mix",      value=True)
-    show_stress = st.checkbox("3 · Stress Signals",  value=True)
-    show_geo    = st.checkbox("4 · Geospatial Heat", value=True)
+    show_macro   = st.checkbox("1 · Macro Regime",    value=True)
+    show_credit  = st.checkbox("2 · Credit Mix",      value=True)
+    show_stress  = st.checkbox("3 · Stress Signals",  value=True)
+    show_geo     = st.checkbox("4 · Geospatial Heat", value=True)
+    show_lookback = st.checkbox("5 · Looking Back",   value=True)
     st.markdown("---")
     st.caption("Data: FRED · Yahoo Finance · LCD/S&P estimates")
 
@@ -514,6 +514,334 @@ if show_geo:
                     '+ ISM Manufacturing PMI by state (2023–24). Higher score = stronger ABL/working capital demand '
                     'driven by onshoring / industrial capex cycle.</div>',
                     unsafe_allow_html=True)
+
+# ═════════════════════════════════════════════════════════════════════════════
+# SECTION 5 · LOOKING BACK  (Howard Marks / Oaktree memo framing)
+# ═════════════════════════════════════════════════════════════════════════════
+if show_lookback:
+    st.markdown("---")
+    st.markdown('<p class="section-label">Section 05</p>', unsafe_allow_html=True)
+    st.header("Looking Back: A Credit Market History")
+    st.markdown(
+        '<div class="disclaimer" style="margin-bottom:16px;">'
+        '"The general field called credit has seen massive innovation over the course of my career. '
+        'Its popularity has increased steadily, and its scale and role in the world of finance have multiplied." '
+        '— Howard Marks, Oaktree Capital, April 2026'
+        '</div>',
+        unsafe_allow_html=True
+    )
+
+    # ── SERIES DEFINITIONS ────────────────────────────────────────────────────
+    # All synthetic / estimated index values (1970 = 100 baseline where applicable)
+    # Sources noted inline; treat as illustrative order-of-magnitude reconstructions.
+
+    years = list(range(1970, 2026))
+
+    # 1. Non-IG / High Yield bond market size ($B, US)
+    #    Source: SIFMA, Fed Flow of Funds. Milken era starts ~1978; explosive 1983-89.
+    hy_size = [
+        5,5,6,6,7,8,9,10,                          # 1970-77
+        15,25,40,60,90,130,180,240,300,             # 1978-86 Milken era
+        280,260,250,270,300,330,370,                # 1987-93 crash+recovery
+        420,500,580,650,700,750,                    # 1994-99
+        680,600,580,620,700,800,900,1000,1100,1200, # 2000-09
+        1150,1200,1280,1350,1400,1450,1480,1500,    # 2010-17
+        1520,1540,1550,1480,1520,1580,1600,1620,    # 2018-25 (2020 dip, recovery)
+    ]
+
+    # 2. Leveraged Buyout / PE debt ($B deployed annually, cumulative index)
+    #    Source: Preqin / PitchBook historical PE deal volume
+    lbo_size = [
+        2,2,3,3,4,5,6,8,                           # 1970-77
+        10,15,25,40,60,100,150,200,220,             # 1978-86
+        180,150,120,100,110,130,160,                # 1987-93
+        200,260,330,420,500,600,                    # 1994-99
+        550,480,440,480,560,700,900,1100,1300,1500, # 2000-09
+        1400,1600,1900,2200,2500,2800,3100,3400,    # 2010-17
+        3600,3800,3500,4200,4800,5100,5300,5400,    # 2018-25
+    ]
+
+    # 3. Broadly Syndicated Loans ($B outstanding, US)
+    #    Source: LSEG LPC. Market barely existed pre-1990.
+    bsl_size = [
+        0,0,0,0,0,0,0,0,                           # 1970-77
+        0,0,0,0,0,0,5,10,20,                       # 1978-86
+        30,40,50,60,80,100,130,                     # 1987-93
+        180,260,360,480,600,750,                    # 1994-99
+        720,660,640,700,800,1000,1200,1400,1600,1200,# 2000-09 (GFC crash)
+        1100,1200,1400,1600,1700,1750,1800,1900,    # 2010-17
+        2000,2100,1900,2400,2600,2700,2800,2900,    # 2018-25
+    ]
+
+    # 4. Structured Credit / CLO / MBS ($B outstanding)
+    #    Source: SIFMA, Fed Z.1 Flow of Funds
+    structured = [
+        10,12,14,16,18,22,26,30,                   # 1970-77
+        35,45,55,65,80,100,130,160,200,             # 1978-86
+        260,320,400,500,600,700,800,                # 1987-93 MBS boom
+        900,1000,1200,1500,1900,2400,               # 1994-99
+        2800,3200,3600,4000,4500,5500,7000,8500,9500,7000,# 2000-09 sub-prime + GFC crash
+        5500,5200,5000,4900,4800,4700,4800,5000,    # 2010-17 delever + recover
+        5200,5400,5600,5800,6000,6200,6400,6600,    # 2018-25
+    ]
+
+    # 5. Direct Lending / Private Credit ($B AUM)
+    #    Source: Preqin / McKinsey Global Private Markets. Barely exists pre-2010.
+    direct_lending = [
+        0,0,0,0,0,0,0,0,                           # 1970-77
+        0,0,0,0,0,0,0,0,0,                         # 1978-86
+        0,0,0,2,4,6,8,                             # 1987-93
+        10,15,20,28,35,45,                          # 1994-99
+        50,55,60,70,80,100,120,140,150,100,         # 2000-09 (GFC dip)
+        120,150,200,280,380,500,620,750,            # 2010-17 explosive growth
+        900,1100,1300,1700,2000,2200,2400,2600,     # 2018-25
+    ]
+
+    # 6. BDC AUM ($B) — public direct lending vehicles
+    #    Source: SEC EDGAR / KBRA. Effectively zero pre-2004.
+    bdc_aum = [
+        0,0,0,0,0,0,0,0,                           # 1970-77
+        0,0,0,0,0,0,0,0,0,                         # 1978-86
+        0,0,0,0,0,0,0,                             # 1987-93
+        0,0,0,0,1,2,                               # 1994-99
+        3,5,8,12,18,25,35,50,60,40,                # 2000-09
+        45,60,80,110,140,170,200,230,              # 2010-17
+        260,290,310,380,420,450,490,520,           # 2018-25
+    ]
+
+    # 7. Total US Debt ($T) — Fed Z.1: households + corporate + govt
+    #    Source: Federal Reserve Flow of Funds Z.1
+    total_debt = [
+        1.6,1.7,1.9,2.1,2.3,2.6,2.9,3.2,          # 1970-77
+        3.7,4.2,4.9,5.7,6.5,7.5,8.7,10.1,11.8,    # 1978-86
+        13.5,15.1,16.5,17.2,17.9,18.5,19.2,        # 1987-93
+        20.5,22.1,24.0,26.3,28.8,32.0,             # 1994-99
+        34.5,36.2,37.8,39.5,42.1,46.2,52.0,57.4,60.1,55.0,# 2000-09
+        55.5,57.0,59.5,62.1,64.8,66.9,69.5,72.3,  # 2010-17
+        75.1,79.2,79.8,91.5,99.8,104.2,108.6,113.0,# 2018-25
+    ]
+
+    # 8. S&P 500 Index (annual close, approx)
+    #    Source: Yahoo Finance / Macrotrends
+    sp500 = [
+        92,102,118,97,68,90,107,107,               # 1970-77
+        96,107,136,135,122,140,167,211,242,        # 1978-86
+        247,277,353,330,417,438,466,                # 1987-93
+        459,615,741,970,1229,1469,                  # 1994-99
+        1320,1148,880,1112,1212,1248,1418,1478,1468,1115,# 2000-09
+        1258,1258,1426,1848,2059,2044,2239,2674,   # 2010-17
+        2507,3231,3756,4766,4797,4288,4770,5882,   # 2018-25
+    ]
+
+    # 9. 10Y US Treasury Yield (annual avg %)
+    #    Source: Federal Reserve H.15
+    yield_10y = [
+        7.3,6.6,6.2,6.8,7.6,7.9,6.8,7.4,          # 1970-77
+        8.4,9.4,10.8,12.9,13.0,10.8,11.6,10.6,8.4,# 1978-86
+        8.4,8.8,9.0,8.1,7.0,6.6,7.1,              # 1987-93
+        7.1,6.6,6.4,6.4,5.6,5.6,                  # 1994-99
+        5.1,5.0,4.6,4.0,4.3,4.3,4.8,4.6,3.7,3.3, # 2000-09
+        3.2,2.8,1.8,2.4,2.5,2.1,2.5,2.3,          # 2010-17
+        2.9,2.1,0.9,1.5,2.9,3.9,4.0,4.2,          # 2018-25
+    ]
+
+    df_lb = pd.DataFrame({
+        "year":           years,
+        "HY Bonds ($B)":              hy_size,
+        "LBO/PE Debt ($B)":           lbo_size,
+        "Syndicated Loans ($B)":      bsl_size,
+        "Structured Credit ($B)":     structured,
+        "Direct Lending ($B)":        direct_lending,
+        "BDC AUM ($B)":               bdc_aum,
+        "Total US Debt ($T×100)":     [x * 100 for x in total_debt],  # scaled to $B for overlay
+        "S&P 500":                    sp500,
+        "10Y Yield (×100 bps)":       [y * 100 for y in yield_10y],   # scaled to overlay
+    })
+
+    # ── CRASH / BUBBLE PERIODS ─────────────────────────────────────────────
+    crash_events = [
+        {"x0": 1973, "x1": 1975, "color": "rgba(255,150,0,0.10)",  "label": "Oil Embargo / Stagflation", "y": 0.95},
+        {"x0": 1987, "x1": 1988, "color": "rgba(255,75,75,0.12)",  "label": "Black Monday '87",          "y": 0.90},
+        {"x0": 1989, "x1": 1992, "color": "rgba(255,100,50,0.10)", "label": "S&L Crisis / Junk Collapse","y": 0.85},
+        {"x0": 1997, "x1": 1999, "color": "rgba(200,100,200,0.10)","label": "Asian / LTCM Crisis",       "y": 0.80},
+        {"x0": 2000, "x1": 2003, "color": "rgba(100,180,255,0.12)","label": "Dot-com Bust",              "y": 0.75},
+        {"x0": 2007, "x1": 2010, "color": "rgba(255,75,75,0.14)",  "label": "GFC / Sub-prime Crash",     "y": 0.70},
+        {"x0": 2020, "x1": 2020, "color": "rgba(100,255,180,0.12)","label": "COVID Shock",               "y": 0.65},
+        {"x0": 2022, "x1": 2023, "color": "rgba(255,200,50,0.10)", "label": "Rate Shock / SVB",          "y": 0.60},
+        {"x0": 2025, "x1": 2026, "color": "rgba(100,180,255,0.12)","label": "AI Disruption / PC Stress", "y": 0.55},
+    ]
+
+    # ── DECADE ERA ANNOTATIONS ─────────────────────────────────────────────
+    era_labels = [
+        {"x": 1971, "text": "70s: Non-IG\nAccepted",    "color": "#8aa0bc"},
+        {"x": 1981, "text": "80s: LBO &\nJunk Boom",    "color": "#f7b731"},
+        {"x": 1992, "text": "90s: BSL &\nTranching",    "color": "#4dd9ac"},
+        {"x": 2002, "text": "00s: Alts &\nSub-prime",   "color": "#fc5c65"},
+        {"x": 2012, "text": "10s: Direct\nLending",     "color": "#45aaf2"},
+        {"x": 2021, "text": "20s: BDCs &\nRetail PC",   "color": "#a55eea"},
+    ]
+
+    # ── TOGGLE CONTROLS ────────────────────────────────────────────────────
+    st.markdown("#### Chart Controls")
+    col_t1, col_t2, col_t3 = st.columns(3)
+
+    with col_t1:
+        st.markdown("**Credit Series**")
+        show_hy       = st.checkbox("HY Bonds",           value=True,  key="lb_hy")
+        show_lbo      = st.checkbox("LBO / PE Debt",      value=True,  key="lb_lbo")
+        show_bsl      = st.checkbox("Syndicated Loans",   value=True,  key="lb_bsl")
+        show_struct   = st.checkbox("Structured Credit",  value=True,  key="lb_str")
+        show_dl       = st.checkbox("Direct Lending",     value=True,  key="lb_dl")
+        show_bdc      = st.checkbox("BDC AUM",            value=True,  key="lb_bdc")
+
+    with col_t2:
+        st.markdown("**Market Overlays**")
+        show_debt     = st.checkbox("Total US Debt",      value=True,  key="lb_debt")
+        show_sp       = st.checkbox("S&P 500",            value=True,  key="lb_sp")
+        show_yield    = st.checkbox("10Y Treasury Yield", value=True,  key="lb_yld")
+
+    with col_t3:
+        st.markdown("**Crash / Bubble Periods**")
+        show_oil      = st.checkbox("Oil Embargo '73",    value=True,  key="lb_oil")
+        show_bm87     = st.checkbox("Black Monday '87",   value=True,  key="lb_bm")
+        show_sl       = st.checkbox("S&L / Junk '89",    value=True,  key="lb_sl")
+        show_asia     = st.checkbox("Asian / LTCM '97",  value=True,  key="lb_asia")
+        show_dot      = st.checkbox("Dot-com '00",        value=True,  key="lb_dot")
+        show_gfc      = st.checkbox("GFC '07",            value=True,  key="lb_gfc")
+        show_covid    = st.checkbox("COVID '20",          value=True,  key="lb_covid")
+        show_svb      = st.checkbox("Rate Shock '22",     value=True,  key="lb_svb")
+        show_ai       = st.checkbox("AI Stress '25",      value=True,  key="lb_ai")
+
+    crash_toggles = [
+        show_oil, show_bm87, show_sl, show_asia,
+        show_dot, show_gfc, show_covid, show_svb, show_ai
+    ]
+
+    # ── BUILD CHART ────────────────────────────────────────────────────────
+    fig_lb = go.Figure()
+
+    # Credit series (left y-axis, $B)
+    credit_series = [
+        ("HY Bonds ($B)",          show_hy,     "#f7b731", "solid",  False),
+        ("LBO/PE Debt ($B)",        show_lbo,    "#fc5c65", "solid",  False),
+        ("Syndicated Loans ($B)",   show_bsl,    "#4dd9ac", "solid",  False),
+        ("Structured Credit ($B)",  show_struct, "#a55eea", "solid",  False),
+        ("Direct Lending ($B)",     show_dl,     "#45aaf2", "dash",   False),
+        ("BDC AUM ($B)",            show_bdc,    "#fd9644", "dot",    False),
+        ("Total US Debt ($T×100)",  show_debt,   "#c9d1e0", "longdash", False),
+    ]
+
+    for name, visible, color, dash, _ in credit_series:
+        if visible:
+            fig_lb.add_trace(go.Scatter(
+                x=df_lb["year"], y=df_lb[name],
+                name=name.replace(" ($T×100)", " ($T, ×100 for scale)"),
+                line=dict(color=color, width=2, dash=dash),
+                hovertemplate="%{x}: %{y:,.0f}<extra>" + name + "</extra>",
+            ))
+
+    # Market overlays (right y-axis)
+    if show_sp:
+        fig_lb.add_trace(go.Scatter(
+            x=df_lb["year"], y=df_lb["S&P 500"],
+            name="S&P 500 (right axis)",
+            line=dict(color="#00d4ff", width=1.5, dash="dot"),
+            yaxis="y2",
+            hovertemplate="%{x}: %{y:,.0f}<extra>S&P 500</extra>",
+        ))
+
+    if show_yield:
+        fig_lb.add_trace(go.Scatter(
+            x=df_lb["year"], y=df_lb["10Y Yield (×100 bps)"],
+            name="10Y Yield bps (right axis)",
+            line=dict(color="#ff4b4b", width=1.5, dash="dashdot"),
+            yaxis="y2",
+            hovertemplate="%{x}: %{y:.0f} bps<extra>10Y Yield</extra>",
+        ))
+
+    # Crash shading
+    for i, (event, toggle) in enumerate(zip(crash_events, crash_toggles)):
+        if toggle:
+            fig_lb.add_vrect(
+                x0=event["x0"] - 0.4, x1=event["x1"] + 0.4,
+                fillcolor=event["color"], line_width=0,
+                annotation_text=event["label"],
+                annotation_position="top left",
+                annotation_font=dict(size=8, color="#8aa0bc"),
+                annotation_textangle=-90,
+            )
+
+    # Era decade labels (bottom strip)
+    for era in era_labels:
+        fig_lb.add_annotation(
+            x=era["x"], y=0,
+            yref="paper",
+            text=era["text"].replace("\n", "<br>"),
+            showarrow=False,
+            font=dict(size=8, color=era["color"]),
+            bgcolor="rgba(10,14,26,0.7)",
+            bordercolor=era["color"],
+            borderwidth=1,
+            borderpad=3,
+            align="center",
+        )
+
+    fig_lb.update_layout(
+        **dark_layout(height=560, title="US Credit Market Evolution 1970–2025 — Size by Instrument ($B)"),
+        yaxis=dict(
+            title="Market Size ($B)",
+            title_font=dict(color="#8aa0bc"),
+            tickformat=",",
+            gridcolor="#1a2540",
+        ),
+        yaxis2=dict(
+            title="S&P 500 / Yield (bps)",
+            overlaying="y", side="right",
+            showgrid=False,
+            title_font=dict(color="#5a9ad4"),
+        ),
+        xaxis=dict(
+            title="Year",
+            tickmode="linear", dtick=5,
+            gridcolor="#1a2540",
+        ),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom", y=1.02,
+            xanchor="left", x=0,
+            font=dict(size=9),
+        ),
+        hovermode="x unified",
+    )
+
+    st.plotly_chart(fig_lb, use_container_width=True)
+
+    # ── MARKS TIMELINE ANNOTATIONS ────────────────────────────────────────
+    st.markdown("#### The Howard Marks Credit Chronology")
+    timeline_cols = st.columns(6)
+    eras = [
+        ("1970s", "#8aa0bc", "Non-IG debt accepted. Milken enables below-investment-grade bond issuance. Fallen angels gain a market."),
+        ("1980s", "#f7b731", "LBO boom funded by HY bonds. Drexel Burnham, KKR. Corporate leverage explodes. S&L crisis ends the decade."),
+        ("1990s", "#4dd9ac", "BSL / leveraged loans invented by Wall Street. CLOs born. Tranching unlocks new buyer pools. PE becomes mainstream."),
+        ("2000s", "#fc5c65", "\"Alternatives\" label born post dot-com. Sub-prime MBS & RMBS proliferate. CDOs squared. GFC 2008-09."),
+        ("2010s", "#45aaf2", "Post-GFC bank retreat creates vacuum. Direct lending fills it. PE-sponsored mid-market borrowers flood in. ZIRP turbocharges returns."),
+        ("2020s", "#a55eea", "BDC vehicles open to retail / 401k. $2T+ in direct loans. AI disrupts software borrowers. PIK toggles rise. Redemption gates hit."),
+    ]
+    for col, (decade, color, desc) in zip(timeline_cols, eras):
+        with col:
+            st.markdown(
+                f'<div style="border-top:2px solid {color};padding-top:8px;">'
+                f'<span style="font-family:IBM Plex Mono;font-size:0.9rem;color:{color};font-weight:600;">{decade}</span>'
+                f'<p style="font-size:0.72rem;color:#8aa0bc;margin-top:6px;">{desc}</p>'
+                f'</div>',
+                unsafe_allow_html=True
+            )
+
+    st.markdown('<div class="disclaimer" style="margin-top:16px;">⚠ Credit market size figures are estimated from '
+                'SIFMA, Federal Reserve Z.1 Flow of Funds, Preqin, PitchBook, and LSEG LPC historical reports. '
+                'S&P 500 prices are approximate annual closes. These are illustrative order-of-magnitude reconstructions '
+                'for educational purposes — not official statistics. Source: Howard Marks / Oaktree Capital memo, April 2026.</div>',
+                unsafe_allow_html=True)
 
 # ── FOOTER ────────────────────────────────────────────────────────────────────
 st.markdown("---")
