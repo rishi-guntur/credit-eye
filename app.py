@@ -343,7 +343,7 @@ if show_credit:
             if len(s) > 0:
                 fig2c.add_trace(go.Scatter(x=s.index, y=s, name=label,
                                            line=dict(color=color, width=1.8)))
-    fig2c.update_layout(**dark_layout(height=260, title="NAV proxy — two largest US BDCs"))
+    fig2c.update_layout(**dark_layout(height=260, title="NAV proxy — largest US BDCs"))
     st.plotly_chart(fig2c, use_container_width=True)
     st.caption("BDC prices are the best publicly available direct-lending proxies. "
                "Drawdowns signal stress in the private credit stack.")
