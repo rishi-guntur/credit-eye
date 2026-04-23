@@ -333,10 +333,10 @@ if show_credit:
     st.subheader("Direct Lending — BDC Performance")
     fig2c = go.Figure()
     for ticker, label, color in [("ARCC",   "Ares Capital (ARCC)", "#45aaf2"),
-                                  ("FS_KKR", "FS KKR (FSK)",        "#fd9644")
-                                ("BSXL", "Blackstone (BSXL)",        "#20bf6b")
-                                ("OBDC", "Blue Owl Capital (OBDC)",        "#a55eea")
-                                ("OBDC", "Blue Owl Capital (OBDC)",        "#3867d6")
+                                  ("FS_KKR", "FS KKR (FSK)",        "#fd9644"),
+                                ("BSXL", "Blackstone (BSXL)",        "#20bf6b"),
+                                ("OBDC", "Blue Owl Capital (OBDC)",        "#a55eea"),
+                                ("OBDC", "Blue Owl Capital (OBDC)",        "#3867d6"),
                                 ("TSLX", "Sixth Street (TSLX)",        "#eb3b5a")]:
         if ticker in yfd:
             s = clip(yfd[ticker]).dropna()
