@@ -330,10 +330,13 @@ if show_credit:
                     'PC took ~43 → 58 pt share 2018–2025 as banks retreated post-SVB.</div>',
                     unsafe_allow_html=True)
 
-    st.subheader("Direct Lending — BDC Performance (ARCC vs FSK)")
+    st.subheader("Direct Lending — BDC Performance")
     fig2c = go.Figure()
     for ticker, label, color in [("ARCC",   "Ares Capital (ARCC)", "#45aaf2"),
-                                  ("FS_KKR", "FS KKR (FSK)",        "#fd9644")]:
+                                  ("FS_KKR", "FS KKR (FSK)",        "#fd9644")
+                                ("BSXL", "Blackstone (BSXL)",        "#20bf6b")
+                                ("OBDC", "Blue Owl Capital (OBDC)",        "#a55eea")
+                                ("OBDC", "Blue Owl Capital (OBDC)",        "#a55eea")]:
         if ticker in yfd:
             s = clip(yfd[ticker]).dropna()
             if len(s) > 0:
