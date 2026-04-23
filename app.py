@@ -4,6 +4,7 @@ import numpy as np
 from fredapi import Fred
 import plotly.graph_objects as go
 import plotly.express as px
+from plotly.subplots import make_subplots
 from datetime import datetime
 import yfinance as yf
 
@@ -717,118 +718,220 @@ if show_lookback:
         show_dot, show_gfc, show_covid, show_svb, show_ai
     ]
 
-    # ── BUILD CHART ────────────────────────────────────────────────────────
-    fig_lb = go.Figure()
+    # ── BUILD CHART — dual stacked subplots sharing x-axis ─────────────────
+    from plotly.subplots import make_subplots
 
-    # Credit series (left y-axis, $B)
-    credit_series = [
-        ("HY Bonds ($B)",          show_hy,     "#f7b731", "solid",  False),
-        ("LBO/PE Debt ($B)",        show_lbo,    "#fc5c65", "solid",  False),
-        ("Syndicated Loans ($B)",   show_bsl,    "#4dd9ac", "solid",  False),
-        ("Structured Credit ($B)",  show_struct, "#a55eea", "solid",  False),
-        ("Direct Lending ($B)",     show_dl,     "#45aaf2", "dash",   False),
-        ("BDC AUM ($B)",            show_bdc,    "#fd9644", "dot",    False),
-        ("Total US Debt ($T×100)",  show_debt,   "#c9d1e0", "longdash", False),
+    fig_lb = make_subplots(
+        rows=2, cols=1,
+        shared_xaxes=True,
+        vertical_spacing=0.06,
+        row_heights=[0.62, 0.38],
+        subplot_titles=("Credit Market Volumes ($B)", "Rates & Equities"),
+    )
+
+    # ── TOP PANEL: volume series ─────────────────────────────────────────────
+    top_series = [
+        ("HY Bonds ($B)",         show_hy,     "#f7b731", "solid"),
+        ("LBO/PE Debt ($B)",       show_lbo,    "#fc5c65", "solid"),
+        ("Syndicated Loans ($B)",  show_bsl,    "#4dd9ac", "solid"),
+        ("Structured Credit ($B)", show_struct, "#a55eea", "solid"),
+        ("Direct Lending ($B)",    show_dl,     "#45aaf2", "dash"),
+        ("BDC AUM ($B)",           show_bdc,    "#fd9644", "dot"),
+        ("Total US Debt ($T x100)",show_debt,   "#c9d1e0", "longdash"),
     ]
+    # map df column names (some have unicode) to the list above
+    col_map = {
+        "Total US Debt ($T x100)": "Total US Debt ($T×100)",
+    }
 
-    for name, visible, color, dash, _ in credit_series:
+    for name, visible, color, dash in top_series:
         if visible:
-            fig_lb.add_trace(go.Scatter(
-                x=df_lb["year"], y=df_lb[name],
-                name=name.replace(" ($T×100)", " ($T, ×100 for scale)"),
-                line=dict(color=color, width=2, dash=dash),
-                hovertemplate="%{x}: %{y:,.0f}<extra>" + name + "</extra>",
-            ))
-
-    # Market overlays (right y-axis)
-    if show_sp:
-        fig_lb.add_trace(go.Scatter(
-            x=df_lb["year"], y=df_lb["S&P 500"],
-            name="S&P 500 (right axis)",
-            line=dict(color="#00d4ff", width=1.5, dash="dot"),
-            yaxis="y2",
-            hovertemplate="%{x}: %{y:,.0f}<extra>S&P 500</extra>",
-        ))
-
-    if show_yield:
-        fig_lb.add_trace(go.Scatter(
-            x=df_lb["year"], y=df_lb["10Y Yield (×100 bps)"],
-            name="10Y Yield bps (right axis)",
-            line=dict(color="#ff4b4b", width=1.5, dash="dashdot"),
-            yaxis="y2",
-            hovertemplate="%{x}: %{y:.0f} bps<extra>10Y Yield</extra>",
-        ))
-
-    # Crash shading
-    for i, (event, toggle) in enumerate(zip(crash_events, crash_toggles)):
-        if toggle:
-            fig_lb.add_vrect(
-                x0=event["x0"] - 0.4, x1=event["x1"] + 0.4,
-                fillcolor=event["color"], line_width=0,
-                annotation_text=event["label"],
-                annotation_position="top left",
-                annotation_font=dict(size=8, color="#8aa0bc"),
-                annotation_textangle=-90,
+            df_col = col_map.get(name, name)
+            fig_lb.add_trace(
+                go.Scatter(
+                    x=df_lb["year"], y=df_lb[df_col],
+                    name=name,
+                    line=dict(color=color, width=2, dash=dash),
+                    hovertemplate="%{x}: %{y:,.0f}<extra>" + name + "</extra>",
+                    legendgroup="vol",
+                ),
+                row=1, col=1,
             )
 
-    # Era decade labels (bottom strip)
+    # ── BOTTOM PANEL: rates & S&P ────────────────────────────────────────────
+    # FFR — pull from FRED data if available, else use yield_10y as fallback
+    ffr_annual = None
+    if "FFR" in d:
+        try:
+            ffr_s = d["FFR"].resample("YE").mean()
+            ffr_annual = pd.Series(
+                ffr_s.values,
+                index=[t.year for t in ffr_s.index]
+            )
+        except Exception:
+            pass
+
+    if show_sp:
+        fig_lb.add_trace(
+            go.Scatter(
+                x=df_lb["year"], y=df_lb["S&P 500"],
+                name="S&P 500",
+                line=dict(color="#00d4ff", width=2),
+                yaxis="y3",
+                hovertemplate="%{x}: %{y:,.0f}<extra>S&P 500</extra>",
+                legendgroup="rates",
+            ),
+            row=2, col=1,
+        )
+
+    if show_yield:
+        fig_lb.add_trace(
+            go.Scatter(
+                x=df_lb["year"], y=yield_10y,
+                name="10Y Yield (%)",
+                line=dict(color="#ff4b4b", width=2),
+                hovertemplate="%{x}: %{y:.1f}%<extra>10Y Yield</extra>",
+                legendgroup="rates",
+            ),
+            row=2, col=1,
+        )
+
+    # FFR overlay on bottom panel
+    if ffr_annual is not None:
+        yr_filt = [y for y in ffr_annual.index if 1970 <= y <= 2025]
+        fig_lb.add_trace(
+            go.Scatter(
+                x=yr_filt,
+                y=[ffr_annual[y] for y in yr_filt],
+                name="Fed Funds Rate (%)",
+                line=dict(color="#ffd700", width=1.8, dash="dot"),
+                hovertemplate="%{x}: %{y:.2f}%<extra>FFR</extra>",
+                legendgroup="rates",
+            ),
+            row=2, col=1,
+        )
+
+    # ── CRASH SHADING — add to BOTH rows via shapes ──────────────────────────
+    shapes  = []
+    annotations = []
+
+    for event, toggle in zip(crash_events, crash_toggles):
+        if not toggle:
+            continue
+        x0, x1 = event["x0"] - 0.4, event["x1"] + 0.4
+        color   = event["color"]
+        label   = event["label"]
+
+        # shade top panel (y refs row 1)
+        shapes.append(dict(
+            type="rect", xref="x", yref="paper",
+            x0=x0, x1=x1, y0=0.38, y1=1.0,
+            fillcolor=color, line_width=0, layer="below",
+        ))
+        # shade bottom panel
+        shapes.append(dict(
+            type="rect", xref="x", yref="paper",
+            x0=x0, x1=x1, y0=0.0, y1=0.35,
+            fillcolor=color, line_width=0, layer="below",
+        ))
+        # single rotated label sitting on the border between panels
+        annotations.append(dict(
+            x=(x0 + x1) / 2, y=0.385,
+            xref="x", yref="paper",
+            text=label,
+            showarrow=False,
+            textangle=-90,
+            font=dict(size=7.5, color="#8aa0bc"),
+            bgcolor="rgba(10,14,26,0.0)",
+            xanchor="center", yanchor="bottom",
+        ))
+
+    # ── ERA DECADE BADGES — on the divider line ───────────────────────────────
     for era in era_labels:
-        fig_lb.add_annotation(
-            x=era["x"], y=0,
-            yref="paper",
+        annotations.append(dict(
+            x=era["x"], y=0.385,
+            xref="x", yref="paper",
             text=era["text"].replace("\n", "<br>"),
             showarrow=False,
             font=dict(size=8, color=era["color"]),
-            bgcolor="rgba(10,14,26,0.7)",
+            bgcolor="rgba(10,14,26,0.85)",
             bordercolor=era["color"],
             borderwidth=1,
             borderpad=3,
             align="center",
-        )
+            xanchor="center",
+            yanchor="top",
+        ))
 
+    # ── LAYOUT ────────────────────────────────────────────────────────────────
     fig_lb.update_layout(
-        template="plotly_dark",
-        height=560,
+        height=680,
         paper_bgcolor="#0a0e1a",
         plot_bgcolor="#0d1220",
         font=dict(family="IBM Plex Mono", size=11, color="#8aa0bc"),
-        margin=dict(l=60, r=60, t=60, b=40),
-        title=dict(
-            text="US Credit Market Evolution 1970-2025 -- Size by Instrument ($B)",
-            font=dict(size=12, color="#5a9ad4"),
+        margin=dict(l=60, r=80, t=50, b=40),
+        shapes=shapes,
+        annotations=annotations,
+        hovermode="x unified",
+        legend=dict(
+            orientation="h",
+            yanchor="bottom", y=1.02,
+            xanchor="left", x=0,
+            font=dict(size=9),
+            bgcolor="rgba(0,0,0,0)",
+            tracegroupgap=20,
         ),
+        # shared x
+        xaxis=dict(
+            showticklabels=False,
+            gridcolor="#1a2540",
+            tickmode="linear", dtick=5,
+        ),
+        xaxis2=dict(
+            title="Year",
+            gridcolor="#1a2540",
+            tickmode="linear", dtick=5,
+        ),
+        # top y
         yaxis=dict(
             title="Market Size ($B)",
             title_font=dict(color="#8aa0bc"),
             tickformat=",",
             gridcolor="#1a2540",
         ),
+        # bottom y left — rates
         yaxis2=dict(
-            title="S&P 500 / Yield (bps)",
-            overlaying="y",
-            side="right",
-            showgrid=False,
-            title_font=dict(color="#5a9ad4"),
-        ),
-        xaxis=dict(
-            title="Year",
-            tickmode="linear",
-            dtick=5,
+            title="Yield / FFR (%)",
+            title_font=dict(color="#8aa0bc"),
             gridcolor="#1a2540",
         ),
-        legend=dict(
-            orientation="h",
-            yanchor="bottom",
-            y=1.02,
-            xanchor="left",
-            x=0,
-            font=dict(size=9),
-            bgcolor="rgba(0,0,0,0)",
-        ),
-        hovermode="x unified",
     )
 
+    # style subplot title fonts
+    for ann in fig_lb.layout.annotations:
+        if hasattr(ann, "text") and ann.text in ("Credit Market Volumes ($B)", "Rates & Equities"):
+            ann.font = dict(size=11, color="#5a9ad4", family="IBM Plex Mono")
+
+    # S&P gets its own right-side y axis on the bottom panel
+    if show_sp:
+        fig_lb.update_traces(
+            selector=dict(name="S&P 500"),
+            yaxis="y4",
+        )
+        fig_lb.update_layout(
+            yaxis4=dict(
+                title="S&P 500",
+                overlaying="y2",
+                side="right",
+                showgrid=False,
+                title_font=dict(color="#00d4ff"),
+                tickfont=dict(color="#00d4ff"),
+            )
+        )
+
     st.plotly_chart(fig_lb, use_container_width=True)
+
+    # ── MARKS TIMELINE ANNOTATIONS
 
     # ── MARKS TIMELINE ANNOTATIONS ────────────────────────────────────────
     st.markdown("#### The Howard Marks Credit Chronology")
