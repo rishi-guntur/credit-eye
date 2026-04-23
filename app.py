@@ -112,6 +112,9 @@ def fetch_yf_data():
         "XLI":    "XLI",
         "ARCC":   "ARCC",
         "FS_KKR": "FSK",
+        "BXSL": "BXSL",
+        "OBDC": "OBDC",
+        "TSLX": "TSLX",
     }
     result = {}
     for key, ticker in tickers.items():
